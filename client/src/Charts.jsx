@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -15,14 +16,56 @@ import {
 } from 'recharts';
 import { formatBytes, formatDay, formatNumber } from './format';
 
-const tooltipStyle = {
-  background: '#fff',
-  border: '1px solid rgba(16,42,51,0.1)',
-  borderRadius: 10,
-  fontSize: 12,
-};
+function cssVar(name, fallback) {
+  if (typeof window === 'undefined') return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
+function useChartTheme() {
+  const [theme, setTheme] = useState(() => ({
+    grid: 'rgba(16,42,51,0.08)',
+    accent: '#0f8f86',
+    accentDeep: '#0b3d4a',
+    warm: '#d97706',
+    bright: '#3dd6c6',
+    tooltip: {
+      background: '#fff',
+      border: '1px solid rgba(16,42,51,0.1)',
+      borderRadius: 10,
+      fontSize: 12,
+      color: '#102a33',
+    },
+  }));
+
+  useEffect(() => {
+    const sync = () => {
+      setTheme({
+        grid: cssVar('--chart-grid', 'rgba(16,42,51,0.08)'),
+        accent: cssVar('--accent', '#0f8f86'),
+        accentDeep: cssVar('--accent-deep', '#0b3d4a'),
+        warm: cssVar('--warm', '#d97706'),
+        bright: cssVar('--accent-bright', '#3dd6c6'),
+        tooltip: {
+          background: cssVar('--chart-tooltip-bg', '#fff'),
+          border: `1px solid ${cssVar('--chart-tooltip-border', 'rgba(16,42,51,0.1)')}`,
+          borderRadius: 10,
+          fontSize: 12,
+          color: cssVar('--chart-tooltip-fg', '#102a33'),
+        },
+      });
+    };
+    sync();
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
+  return theme;
+}
 
 export function LiveUtilizationChart({ points }) {
+  const theme = useChartTheme();
   const data = (points || []).map((p) => ({
     ...p,
     label: new Date(p.t).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
@@ -38,21 +81,21 @@ export function LiveUtilizationChart({ points }) {
         <AreaChart data={data}>
           <defs>
             <linearGradient id="cpuFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0f8f86" stopOpacity={0.45} />
-              <stop offset="100%" stopColor="#0f8f86" stopOpacity={0.02} />
+              <stop offset="0%" stopColor={theme.accent} stopOpacity={0.45} />
+              <stop offset="100%" stopColor={theme.accent} stopOpacity={0.02} />
             </linearGradient>
             <linearGradient id="gpuFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#d97706" stopOpacity={0.4} />
-              <stop offset="100%" stopColor="#d97706" stopOpacity={0.02} />
+              <stop offset="0%" stopColor={theme.warm} stopOpacity={0.4} />
+              <stop offset="100%" stopColor={theme.warm} stopOpacity={0.02} />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke="rgba(16,42,51,0.08)" vertical={false} />
-          <XAxis dataKey="label" tick={{ fontSize: 11 }} minTickGap={40} />
-          <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" width={40} />
-          <Tooltip contentStyle={tooltipStyle} />
+          <CartesianGrid stroke={theme.grid} vertical={false} />
+          <XAxis dataKey="label" tick={{ fontSize: 11, fill: theme.tooltip.color }} minTickGap={40} />
+          <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: theme.tooltip.color }} unit="%" width={40} />
+          <Tooltip contentStyle={theme.tooltip} />
           <Legend />
-          <Area type="monotone" dataKey="cpuUtilization" name="CPU %" stroke="#0f8f86" fill="url(#cpuFill)" strokeWidth={2} />
-          <Area type="monotone" dataKey="gpuUtilization" name="GPU %" stroke="#d97706" fill="url(#gpuFill)" strokeWidth={2} />
+          <Area type="monotone" dataKey="cpuUtilization" name="CPU %" stroke={theme.accent} fill="url(#cpuFill)" strokeWidth={2} />
+          <Area type="monotone" dataKey="gpuUtilization" name="GPU %" stroke={theme.warm} fill="url(#gpuFill)" strokeWidth={2} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -60,6 +103,7 @@ export function LiveUtilizationChart({ points }) {
 }
 
 export function ActiveTasksChart({ points }) {
+  const theme = useChartTheme();
   const data = (points || []).map((p) => ({
     ...p,
     label: new Date(p.t).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
@@ -70,13 +114,13 @@ export function ActiveTasksChart({ points }) {
     <div className="chart-box">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
-          <CartesianGrid stroke="rgba(16,42,51,0.08)" vertical={false} />
-          <XAxis dataKey="label" tick={{ fontSize: 11 }} minTickGap={40} />
-          <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={30} />
-          <Tooltip contentStyle={tooltipStyle} />
+          <CartesianGrid stroke={theme.grid} vertical={false} />
+          <XAxis dataKey="label" tick={{ fontSize: 11, fill: theme.tooltip.color }} minTickGap={40} />
+          <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: theme.tooltip.color }} width={30} />
+          <Tooltip contentStyle={theme.tooltip} />
           <Legend />
-          <Line type="monotone" dataKey="active" name="Активные" stroke="#0b3d4a" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="running" name="Выполняются" stroke="#0f8f86" strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="active" name="Активные" stroke={theme.accentDeep} strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="running" name="Выполняются" stroke={theme.accent} strokeWidth={2} dot={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -84,6 +128,7 @@ export function ActiveTasksChart({ points }) {
 }
 
 export function CreditHistoryChart({ statistics }) {
+  const theme = useChartTheme();
   const series = (statistics || []).flatMap((project) =>
     (project.daily || []).map((d) => ({
       day: d.day,
@@ -95,7 +140,6 @@ export function CreditHistoryChart({ statistics }) {
     })),
   );
 
-  // Aggregate by day across projects for a clean overview chart.
   const byDay = new Map();
   for (const row of series) {
     const key = row.day;
@@ -113,16 +157,16 @@ export function CreditHistoryChart({ statistics }) {
     <div className="chart-box tall">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data}>
-          <CartesianGrid stroke="rgba(16,42,51,0.08)" vertical={false} />
-          <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} width={56} tickFormatter={(v) => formatNumber(v, 0)} />
+          <CartesianGrid stroke={theme.grid} vertical={false} />
+          <XAxis dataKey="label" tick={{ fontSize: 11, fill: theme.tooltip.color }} />
+          <YAxis tick={{ fontSize: 11, fill: theme.tooltip.color }} width={56} tickFormatter={(v) => formatNumber(v, 0)} />
           <Tooltip
-            contentStyle={tooltipStyle}
+            contentStyle={theme.tooltip}
             formatter={(value, name) => [formatNumber(value, 0), name]}
           />
           <Legend />
-          <Bar dataKey="hostDelta" name="Δ кредит хоста / день" fill="#0f8f86" radius={[6, 6, 0, 0]} />
-          <Line type="monotone" dataKey="hostExpavg" name="Средний кредит (RAC)" stroke="#d97706" strokeWidth={2} />
+          <Bar dataKey="hostDelta" name="Δ кредит хоста / день" fill={theme.accent} radius={[6, 6, 0, 0]} />
+          <Line type="monotone" dataKey="hostExpavg" name="Средний кредит (RAC)" stroke={theme.warm} strokeWidth={2} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
@@ -130,6 +174,7 @@ export function CreditHistoryChart({ statistics }) {
 }
 
 export function TransferHistoryChart({ dailyXfers }) {
+  const theme = useChartTheme();
   const data = (dailyXfers || []).slice(-30).map((d) => ({
     label: formatDay(d.dayMs),
     up: d.up,
@@ -141,16 +186,16 @@ export function TransferHistoryChart({ dailyXfers }) {
     <div className="chart-box">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
-          <CartesianGrid stroke="rgba(16,42,51,0.08)" vertical={false} />
-          <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} width={64} tickFormatter={(v) => formatBytes(v)} />
+          <CartesianGrid stroke={theme.grid} vertical={false} />
+          <XAxis dataKey="label" tick={{ fontSize: 11, fill: theme.tooltip.color }} />
+          <YAxis tick={{ fontSize: 11, fill: theme.tooltip.color }} width={64} tickFormatter={(v) => formatBytes(v)} />
           <Tooltip
-            contentStyle={tooltipStyle}
+            contentStyle={theme.tooltip}
             formatter={(value, name) => [formatBytes(value), name]}
           />
           <Legend />
-          <Area type="monotone" dataKey="down" name="Скачано" stroke="#0b3d4a" fill="rgba(11,61,74,0.18)" strokeWidth={2} />
-          <Area type="monotone" dataKey="up" name="Отправлено" stroke="#0f8f86" fill="rgba(15,143,134,0.18)" strokeWidth={2} />
+          <Area type="monotone" dataKey="down" name="Скачано" stroke={theme.accentDeep} fill={`${theme.accentDeep}2e`} strokeWidth={2} />
+          <Area type="monotone" dataKey="up" name="Отправлено" stroke={theme.accent} fill={`${theme.accent}2e`} strokeWidth={2} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -158,6 +203,7 @@ export function TransferHistoryChart({ dailyXfers }) {
 }
 
 export function DiskUsageChart({ disk }) {
+  const theme = useChartTheme();
   const projects = disk?.projects || [];
   if (!projects.length) return <div className="empty">Нет данных о диске</div>;
   const data = projects.map((p) => ({ name: p.name, usage: p.diskUsage }));
@@ -166,11 +212,11 @@ export function DiskUsageChart({ disk }) {
     <div className="chart-box">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ left: 24 }}>
-          <CartesianGrid stroke="rgba(16,42,51,0.08)" horizontal={false} />
-          <XAxis type="number" tickFormatter={(v) => formatBytes(v)} tick={{ fontSize: 11 }} />
-          <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
-          <Tooltip contentStyle={tooltipStyle} formatter={(v) => formatBytes(v)} />
-          <Bar dataKey="usage" name="Диск" fill="#3dd6c6" radius={[0, 6, 6, 0]} />
+          <CartesianGrid stroke={theme.grid} horizontal={false} />
+          <XAxis type="number" tickFormatter={(v) => formatBytes(v)} tick={{ fontSize: 11, fill: theme.tooltip.color }} />
+          <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11, fill: theme.tooltip.color }} />
+          <Tooltip contentStyle={theme.tooltip} formatter={(v) => formatBytes(v)} />
+          <Bar dataKey="usage" name="Диск" fill={theme.bright} radius={[0, 6, 6, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
