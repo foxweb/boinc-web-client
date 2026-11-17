@@ -50,10 +50,11 @@ function boolFlag(obj, key) {
 }
 
 export class BoincClient {
-  constructor({ host, port, password, timeoutMs = 8000 }) {
+  constructor({ host, port, password, socketPath = null, timeoutMs = 8000 }) {
     this.host = host;
     this.port = port;
     this.password = password;
+    this.socketPath = socketPath || null;
     this.timeoutMs = timeoutMs;
   }
 
@@ -118,7 +119,9 @@ export class BoincClient {
     return {
       connected: true,
       fetchedAt: new Date().toISOString(),
-      endpoint: { host: this.host, port: this.port },
+      endpoint: this.socketPath
+        ? { socket: this.socketPath }
+        : { host: this.host, port: this.port },
       version: version?.server_version
         ? `${version.server_version.major}.${version.server_version.minor}.${version.server_version.release}`
         : null,
@@ -150,7 +153,11 @@ export class BoincClient {
 
   #connect() {
     return new Promise((resolve, reject) => {
-      const socket = net.createConnection({ host: this.host, port: this.port });
+      const target = this.socketPath
+        ? { path: this.socketPath }
+        : { host: this.host, port: this.port };
+      const label = this.socketPath || `${this.host}:${this.port}`;
+      const socket = net.createConnection(target);
       const onError = (err) => {
         cleanup();
         reject(err);
@@ -168,7 +175,7 @@ export class BoincClient {
       socket.once('connect', onConnect);
       socket.setTimeout(this.timeoutMs, () => {
         socket.destroy();
-        reject(new Error(`Connection timeout to ${this.host}:${this.port}`));
+        reject(new Error(`Connection timeout to ${label}`));
       });
     });
   }

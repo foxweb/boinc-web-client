@@ -96,7 +96,9 @@ export default function App() {
         <div className="conn">
           <div className={`pill`}>
             <span className={`dot ${error && !data ? 'err' : ''}`} />
-            {data?.endpoint
+            {data?.endpoint?.socket
+              ? 'unix-socket → BOINC'
+              : data?.endpoint
               ? `${data.endpoint.host}:${data.endpoint.port}`
               : `${cfg.host}:${cfg.port}`}
             {data?.version ? ` · v${data.version}` : ''}

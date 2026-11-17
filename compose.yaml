@@ -1,5 +1,4 @@
 services:
-  # Forwards docker0 -> localhost BOINC GUI RPC (host network).
   boinc-proxy:
     image: boinc-web-client:local
     build:
@@ -9,10 +8,11 @@ services:
     restart: unless-stopped
     network_mode: host
     environment:
-      PROXY_BIND: ${PROXY_BIND:-172.17.0.1}
-      PROXY_PORT: ${PROXY_PORT:-31417}
+      BOINC_SOCKET: /boinc-ipc/gui_rpc.sock
       BOINC_HOST: 127.0.0.1
       BOINC_PORT: ${BOINC_PORT:-31416}
+    volumes:
+      - boinc_ipc:/boinc-ipc
     command: ["node", "server/boincProxy.js"]
     healthcheck:
       disable: true
@@ -28,17 +28,14 @@ services:
       - boinc-proxy
     ports:
       - "${PORT:-8080}:8080"
-    # Join docker0 so the container can reach the host-network proxy on 172.17.0.1
-    networks:
-      - default
-      - docker_bridge
     environment:
       PORT: 8080
-      BOINC_HOST: ${PROXY_BIND:-172.17.0.1}
-      BOINC_PORT: ${PROXY_PORT:-31417}
+      BOINC_SOCKET: /boinc-ipc/gui_rpc.sock
       BOINC_PASSWORD: ${BOINC_PASSWORD:?Set BOINC_PASSWORD in .env}
       HISTORY_INTERVAL_MS: ${HISTORY_INTERVAL_MS:-5000}
       HISTORY_MAX_POINTS: ${HISTORY_MAX_POINTS:-240}
+    volumes:
+      - boinc_ipc:/boinc-ipc
     healthcheck:
       test:
         [
@@ -52,7 +49,5 @@ services:
       retries: 3
       start_period: 20s
 
-networks:
-  docker_bridge:
-    external: true
-    name: bridge
+volumes:
+  boinc_ipc:

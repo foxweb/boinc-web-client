@@ -12,6 +12,7 @@ const config = {
   host: process.env.BOINC_HOST || '127.0.0.1',
   port: Number(process.env.BOINC_PORT || 31416),
   password: process.env.BOINC_PASSWORD || '',
+  socketPath: process.env.BOINC_SOCKET || null,
   httpPort: Number(process.env.PORT || 8080),
   historyIntervalMs: Number(process.env.HISTORY_INTERVAL_MS || 5000),
   historyMaxPoints: Number(process.env.HISTORY_MAX_POINTS || 240),
@@ -57,7 +58,9 @@ async function sampleOnce() {
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
-    endpoint: { host: config.host, port: config.port },
+    endpoint: config.socketPath
+      ? { socket: config.socketPath }
+      : { host: config.host, port: config.port },
     lastError,
     samples: liveHistory.length,
     fetchedAt: lastOverview?.fetchedAt ?? null,
@@ -68,6 +71,7 @@ app.get('/api/config', (_req, res) => {
   res.json({
     host: config.host,
     port: config.port,
+    socketPath: config.socketPath,
     passwordSet: Boolean(config.password),
     historyIntervalMs: config.historyIntervalMs,
   });
@@ -84,7 +88,7 @@ app.post('/api/config', (req, res) => {
   liveHistory.length = 0;
   lastOverview = null;
   sampleOnce();
-  res.json({ ok: true, host: config.host, port: config.port });
+  res.json({ ok: true, host: config.host, port: config.port, socketPath: config.socketPath });
 });
 
 app.get('/api/overview', async (req, res) => {

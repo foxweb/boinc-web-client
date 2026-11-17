@@ -25,18 +25,17 @@ docker compose logs -f    # логи
 docker compose down       # стоп
 ```
 
-Контейнер с `restart: unless-stopped` поднимается вместе с Docker после reboot.
+Контейнеры с `restart: unless-stopped` поднимаются вместе с Docker после reboot.
 
 ## Переменные окружения
 
 | Переменная | По умолчанию | Описание |
 |---|---|---|
 | `BOINC_PASSWORD` | — | пароль GUI RPC (обязателен) |
-| `BOINC_HOST` | `127.0.0.1` | хост BOINC-клиента |
-| `BOINC_PORT` | `31416` | порт GUI RPC |
+| `BOINC_PORT` | `31416` | порт GUI RPC на хосте |
 | `PORT` | `8080` | HTTP-порт веб-UI |
 
-Ве публикует порт UI через Docker (`8080`, проходит UFW как у Grafana). Доступ к GUI RPC идёт через sidecar-прокси на `docker0` → `127.0.0.1:31416` (LAN ACL BOINC не мешает).
+UI публикуется Docker-портом `:8080` (проходит UFW). GUI RPC: sidecar (`network_mode: host`) проксирует localhost BOINC в unix-socket на shared volume.
 
 ## Что показывает
 
@@ -47,7 +46,6 @@ RPC: `exchange_versions`, `get_host_info`, `get_cc_status`, `get_project_status`
 ## Опционально: systemd (нужен sudo)
 
 ```bash
-# поправьте WorkingDirectory в unit при необходимости
 sudo cp deploy/boinc-monitor.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now boinc-monitor.service

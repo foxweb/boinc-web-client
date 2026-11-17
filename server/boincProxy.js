@@ -1,13 +1,22 @@
 /**
- * Tiny TCP proxy: listen on docker0 (or PROXY_BIND) and forward to local BOINC GUI RPC.
- * Used so a bridge-networked web container can reach host BOINC without UFW LAN rules.
+ * Unix-socket TCP proxy to local BOINC GUI RPC.
+ * Host-network sidecar listens on a shared volume socket; the bridge web
+ * container connects via the same volume (UFW cannot block unix sockets).
  */
+import fs from 'node:fs';
 import net from 'node:net';
+import path from 'node:path';
 
-const listenHost = process.env.PROXY_BIND || '172.17.0.1';
-const listenPort = Number(process.env.PROXY_PORT || 31417);
+const socketPath = process.env.BOINC_SOCKET || '/boinc-ipc/gui_rpc.sock';
 const targetHost = process.env.BOINC_HOST || '127.0.0.1';
 const targetPort = Number(process.env.BOINC_PORT || 31416);
+
+fs.mkdirSync(path.dirname(socketPath), { recursive: true });
+try {
+  fs.unlinkSync(socketPath);
+} catch {
+  // ignore missing socket
+}
 
 const server = net.createServer((client) => {
   const upstream = net.connect({ host: targetHost, port: targetPort }, () => {
@@ -27,6 +36,22 @@ server.on('error', (err) => {
   process.exit(1);
 });
 
-server.listen(listenPort, listenHost, () => {
-  console.log(`BOINC proxy ${listenHost}:${listenPort} -> ${targetHost}:${targetPort}`);
+server.listen(socketPath, () => {
+  try {
+    fs.chmodSync(socketPath, 0o666);
+  } catch {
+    // best-effort for cross-user container access
+  }
+  console.log(`BOINC proxy ${socketPath} -> ${targetHost}:${targetPort}`);
 });
+
+const shutdown = () => {
+  try {
+    fs.unlinkSync(socketPath);
+  } catch {
+    // ignore
+  }
+  process.exit(0);
+};
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
