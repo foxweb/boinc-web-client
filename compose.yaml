@@ -1,18 +1,36 @@
 services:
-  web:
+  # Forwards docker0 -> localhost BOINC GUI RPC (host network).
+  boinc-proxy:
+    image: boinc-web-client:local
     build:
       context: .
       dockerfile: Dockerfile
-    image: boinc-web-client:local
-    container_name: boinc-monitor
+    container_name: boinc-monitor-proxy
     restart: unless-stopped
-    # Host network so the container can reach BOINC GUI RPC on localhost:31416
-    # (Docker bridge IPs are not in remote_hosts.cfg).
     network_mode: host
     environment:
-      PORT: ${PORT:-8080}
-      BOINC_HOST: ${BOINC_HOST:-127.0.0.1}
+      PROXY_BIND: ${PROXY_BIND:-172.17.0.1}
+      PROXY_PORT: ${PROXY_PORT:-131416}
+      BOINC_HOST: 127.0.0.1
       BOINC_PORT: ${BOINC_PORT:-31416}
+    command: ["node", "server/boincProxy.js"]
+
+  web:
+    image: boinc-web-client:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: boinc-monitor
+    restart: unless-stopped
+    depends_on:
+      - boinc-proxy
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      PORT: 8080
+      # Reach host BOINC via the docker0 proxy (bypasses UFW LAN restrictions).
+      BOINC_HOST: ${PROXY_BIND:-172.17.0.1}
+      BOINC_PORT: ${PROXY_PORT:-131416}
       BOINC_PASSWORD: ${BOINC_PASSWORD:?Set BOINC_PASSWORD in .env}
       HISTORY_INTERVAL_MS: ${HISTORY_INTERVAL_MS:-5000}
       HISTORY_MAX_POINTS: ${HISTORY_MAX_POINTS:-240}
@@ -22,7 +40,7 @@ services:
           "CMD",
           "node",
           "-e",
-          "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+          "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 30s
       timeout: 5s

@@ -8,21 +8,24 @@
 
 ## Запуск
 
-На машине с Docker (обычно там же, где крутится BOINC):
+Только Docker. На машине с BOINC:
 
 ```bash
-git clone git@github.com:foxweb/boinc-web-client.git
-cd boinc-web-client
-cp .env.example .env
-# укажите BOINC_PASSWORD (и при необходимости BOINC_HOST/PORT)
+git clone git@github.com:foxweb/boinc-web-client.git ~/boinc-web-client
+cd ~/boinc-web-client
+cp .env.example .env   # задайте BOINC_PASSWORD
 docker compose up -d --build
 ```
 
-Откройте в браузере: **http://\<хост\>:8080**
+Браузер: **http://\<хост\>:8080**  
+(на foxweb-pc: http://192.168.1.45:8080)
 
-Остановка: `docker compose down`
+```bash
+docker compose logs -f    # логи
+docker compose down       # стоп
+```
 
-Логи: `docker compose logs -f`
+Контейнер с `restart: unless-stopped` поднимается вместе с Docker после reboot.
 
 ## Переменные окружения
 
@@ -33,7 +36,7 @@ docker compose up -d --build
 | `BOINC_PORT` | `31416` | порт GUI RPC |
 | `PORT` | `8080` | HTTP-порт веб-UI |
 
-Compose использует `network_mode: host`, чтобы контейнер доставал GUI RPC на localhost (bridge IP обычно не в `remote_hosts.cfg`).
+Ве публикует порт UI через Docker (`8080`, проходит UFW как у Grafana). Доступ к GUI RPC идёт через sidecar-прокси на `docker0` → `127.0.0.1:31416` (LAN ACL BOINC не мешает).
 
 ## Что показывает
 
@@ -41,9 +44,10 @@ Host / CC status, проекты, задачи, передачи, сообщен
 
 RPC: `exchange_versions`, `get_host_info`, `get_cc_status`, `get_project_status`, `get_results`, `get_file_transfers`, `get_messages`, `get_disk_usage`, `get_statistics`, `get_daily_xfer_history`.
 
-## Сервис на хосте
+## Опционально: systemd (нужен sudo)
 
 ```bash
+# поправьте WorkingDirectory в unit при необходимости
 sudo cp deploy/boinc-monitor.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now boinc-monitor.service
