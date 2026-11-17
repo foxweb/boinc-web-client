@@ -7,6 +7,7 @@ services:
     container_name: boinc-monitor-proxy
     restart: unless-stopped
     network_mode: host
+    user: "0:0"
     environment:
       BOINC_SOCKET: /boinc-ipc/gui_rpc.sock
       BOINC_HOST: 127.0.0.1

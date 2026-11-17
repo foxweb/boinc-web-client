@@ -121,7 +121,11 @@ app.get('*', (req, res, next) => {
 
 app.listen(config.httpPort, '0.0.0.0', () => {
   console.log(`BOINC web client API on http://127.0.0.1:${config.httpPort}`);
-  console.log(`Proxying GUI RPC ${config.host}:${config.port}`);
+  console.log(
+    config.socketPath
+      ? `BOINC via unix socket ${config.socketPath}`
+      : `Proxying GUI RPC ${config.host}:${config.port}`,
+  );
   sampleOnce();
   setInterval(sampleOnce, config.historyIntervalMs);
 });
