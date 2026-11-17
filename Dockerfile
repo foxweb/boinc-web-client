@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 FROM node:22.14-bookworm-slim AS client-build
 WORKDIR /app/client
 COPY client/package.json client/package-lock.json ./
