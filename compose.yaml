@@ -14,6 +14,8 @@ services:
       BOINC_HOST: 127.0.0.1
       BOINC_PORT: ${BOINC_PORT:-31416}
     command: ["node", "server/boincProxy.js"]
+    healthcheck:
+      disable: true
 
   web:
     image: boinc-web-client:local
@@ -26,9 +28,12 @@ services:
       - boinc-proxy
     ports:
       - "${PORT:-8080}:8080"
+    # Join docker0 so the container can reach the host-network proxy on 172.17.0.1
+    networks:
+      - default
+      - docker_bridge
     environment:
       PORT: 8080
-      # Reach host BOINC via the docker0 proxy (bypasses UFW LAN restrictions).
       BOINC_HOST: ${PROXY_BIND:-172.17.0.1}
       BOINC_PORT: ${PROXY_PORT:-31417}
       BOINC_PASSWORD: ${BOINC_PASSWORD:?Set BOINC_PASSWORD in .env}
@@ -46,3 +51,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+
+networks:
+  docker_bridge:
+    external: true
+    name: bridge
