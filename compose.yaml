@@ -10,7 +10,7 @@ services:
     network_mode: host
     environment:
       PROXY_BIND: ${PROXY_BIND:-172.17.0.1}
-      PROXY_PORT: ${PROXY_PORT:-131416}
+      PROXY_PORT: ${PROXY_PORT:-31417}
       BOINC_HOST: 127.0.0.1
       BOINC_PORT: ${BOINC_PORT:-31416}
     command: ["node", "server/boincProxy.js"]
@@ -30,7 +30,7 @@ services:
       PORT: 8080
       # Reach host BOINC via the docker0 proxy (bypasses UFW LAN restrictions).
       BOINC_HOST: ${PROXY_BIND:-172.17.0.1}
-      BOINC_PORT: ${PROXY_PORT:-131416}
+      BOINC_PORT: ${PROXY_PORT:-31417}
       BOINC_PASSWORD: ${BOINC_PASSWORD:?Set BOINC_PASSWORD in .env}
       HISTORY_INTERVAL_MS: ${HISTORY_INTERVAL_MS:-5000}
       HISTORY_MAX_POINTS: ${HISTORY_MAX_POINTS:-240}

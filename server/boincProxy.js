@@ -5,7 +5,7 @@
 import net from 'node:net';
 
 const listenHost = process.env.PROXY_BIND || '172.17.0.1';
-const listenPort = Number(process.env.PROXY_PORT || 131416);
+const listenPort = Number(process.env.PROXY_PORT || 31417);
 const targetHost = process.env.BOINC_HOST || '127.0.0.1';
 const targetPort = Number(process.env.BOINC_PORT || 31416);
 
