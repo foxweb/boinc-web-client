@@ -455,22 +455,7 @@ td.mono,
   background: var(--button-hover);
 }
 
-.icon-btn.refresh-btn {
-  background: var(--accent-deep);
-  border-color: transparent;
-  color: #fff;
-}
-
-.icon-btn.refresh-btn:hover {
-  background: var(--button-hover);
-  color: #fff;
-}
-
 @media (prefers-color-scheme: dark) {
-  .icon-btn.refresh-btn {
-    color: #062027;
-  }
-
   .settings button {
     color: #062027;
   }
