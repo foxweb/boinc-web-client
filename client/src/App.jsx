@@ -128,10 +128,18 @@ export default function App() {
               title="Обновить"
               onClick={() => load(true)}
             >
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none">
+                <path
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 12a9 9 0 1 1-2.64-6.36"
+                />
                 <path
                   fill="currentColor"
-                  d="M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V7c2.76 0 5 2.24 5 5a5 5 0 0 1-8.66 3.5l-1.42 1.42A7 7 0 0 0 19 12c0-1.93-.78-3.68-2.05-4.95ZM6 12c0-1.61.77-3.04 1.96-3.95l1.42-1.42A6.98 6.98 0 0 0 5 12a7 7 0 0 0 11.08 5.66l-1.42-1.42A5 5 0 0 1 6 12Z"
+                  stroke="none"
+                  d="M21 3v6h-6l6-6Z"
                 />
               </svg>
             </button>
