@@ -30,17 +30,24 @@ export function formatDuration(seconds) {
   return `${sec}с`;
 }
 
-export function formatDate(ms) {
-  if (!ms) return '—';
-  return new Intl.DateTimeFormat('ru-RU', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(ms));
+function pad2(n) {
+  return String(n).padStart(2, '0');
 }
 
+/** Local datetime as `YYYY-MM-DD HH:mm`. */
+export function formatDate(ms) {
+  if (!ms) return '—';
+  const d = new Date(ms);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+/** Chart axis day label as `YYYY-MM-DD`. */
 export function formatDay(ms) {
   if (!ms) return '—';
-  return new Intl.DateTimeFormat('ru-RU', { month: 'short', day: 'numeric' }).format(new Date(ms));
+  const d = new Date(ms);
+  if (Number.isNaN(d.getTime())) return '—';
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
 export function formatPercent(fraction, digits = 1) {
