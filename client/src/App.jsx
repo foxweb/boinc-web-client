@@ -34,6 +34,16 @@ function taskStatus(r) {
   return { label: `Состояние ${r.state}`, cls: 'badge idle' };
 }
 
+function ExternalTextLink({ href, children }) {
+  if (!children) return '—';
+  if (!href) return children;
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  );
+}
+
 export default function App() {
   const [tab, setTab] = useState('overview');
   const [data, setData] = useState(null);
@@ -372,11 +382,23 @@ export default function App() {
                     </div>
                     <div className="kv">
                       <div className="k">Пользователь</div>
-                      <div className="v">{selectedProject.userName}</div>
+                      <div className="v">
+                        <ExternalTextLink href={selectedProject.userUrl}>
+                          {selectedProject.userName}
+                        </ExternalTextLink>
+                      </div>
                     </div>
                     <div className="kv">
                       <div className="k">Команда</div>
-                      <div className="v">{selectedProject.teamName || '—'}</div>
+                      <div className="v">
+                        {selectedProject.teamName ? (
+                          <ExternalTextLink href={selectedProject.teamUrl}>
+                            {selectedProject.teamName}
+                          </ExternalTextLink>
+                        ) : (
+                          '—'
+                        )}
+                      </div>
                     </div>
                     <div className="kv">
                       <div className="k">Доля ресурса</div>
@@ -401,7 +423,7 @@ export default function App() {
                     <div className="kv">
                       <div className="k">URL</div>
                       <div className="v">
-                        <a href={selectedProject.masterUrl} target="_blank" rel="noreferrer">
+                        <a href={selectedProject.masterUrl} target="_blank" rel="noopener noreferrer">
                           {selectedProject.masterUrl}
                         </a>
                       </div>

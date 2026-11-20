@@ -49,6 +49,65 @@ function boolFlag(obj, key) {
   return obj != null && Object.prototype.hasOwnProperty.call(obj, key);
 }
 
+function idOf(value) {
+  const n = num(value, 0);
+  return n > 0 ? n : null;
+}
+
+/** Join a path/query onto a BOINC master URL. */
+function joinMasterPath(masterUrl, pathQuery) {
+  if (!masterUrl || !pathQuery) return '';
+  try {
+    const base = masterUrl.endsWith('/') ? masterUrl : `${masterUrl}/`;
+    return new URL(pathQuery, base).href;
+  } catch {
+    return '';
+  }
+}
+
+function buildUserUrl(masterUrl, userId) {
+  return userId ? joinMasterPath(masterUrl, `show_user.php?userid=${userId}`) : '';
+}
+
+function buildTeamUrl(masterUrl, teamId) {
+  return teamId ? joinMasterPath(masterUrl, `team_display.php?teamid=${teamId}`) : '';
+}
+
+const projectLinkCache = new Map();
+const LINK_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Some projects (e.g. Einstein@Home Drupal) 404 on classic team_display.php.
+ * Their show_user page still links to the real team page — prefer that when found.
+ */
+async function resolveTeamUrlFromProfile(userUrl, teamName) {
+  if (!userUrl || !teamName) return '';
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
+  try {
+    const res = await fetch(userUrl, {
+      signal: controller.signal,
+      redirect: 'follow',
+      headers: { 'user-agent': 'boinc-web-client/1.0' },
+    });
+    if (!res.ok) return '';
+    const html = await res.text();
+    const re = new RegExp(`href=["']([^"']+)["'][^>]*>\\s*${escapeRegExp(teamName)}\\s*<`, 'i');
+    const match = html.match(re);
+    if (!match) return '';
+    return new URL(match[1], res.url).href;
+  } catch {
+    return '';
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+
 export class BoincClient {
   constructor({ host, port, password, socketPath = null, timeoutMs = 8000 }) {
     this.host = host;
@@ -95,7 +154,9 @@ export class BoincClient {
 
     const host = this.#normalizeHost(hostInfo?.host_info);
     const status = this.#normalizeCcStatus(ccStatus?.cc_status);
-    const projectList = this.#normalizeProjects(projects?.projects?.project);
+    const projectList = await this.#withProjectWebLinks(
+      this.#normalizeProjects(projects?.projects?.project),
+    );
     const resultList = this.#normalizeResults(results?.results?.result);
     const transferList = this.#normalizeTransfers(transfers?.file_transfers?.file_transfer);
     const diskUsage = this.#normalizeDisk(disk?.disk_usage_summary, projectList);
@@ -298,32 +359,78 @@ export class BoincClient {
   }
 
   #normalizeProjects(list) {
-    return asArray(list).map((p) => ({
-      masterUrl: textOf(p.master_url),
-      name: textOf(p.project_name) || textOf(p.master_url),
-      userName: textOf(p.user_name),
-      teamName: textOf(p.team_name),
-      hostVenue: textOf(p.host_venue),
-      userTotalCredit: num(p.user_total_credit),
-      userExpavgCredit: num(p.user_expavg_credit),
-      hostTotalCredit: num(p.host_total_credit),
-      hostExpavgCredit: num(p.host_expavg_credit),
-      resourceShare: num(p.resource_share),
-      njobsSuccess: num(p.njobs_success),
-      njobsError: num(p.njobs_error),
-      elapsedTime: num(p.elapsed_time),
-      lastRpcTime: num(p.last_rpc_time),
-      nextRpcTime: num(p.next_rpc_time),
-      suspended: boolFlag(p, 'suspended_via_gui'),
-      dontRequestMoreWork: boolFlag(p, 'dont_request_more_work'),
-      ended: boolFlag(p, 'ended'),
-      schedulerRpcInProgress: boolFlag(p, 'scheduler_rpc_in_progress'),
-      guiUrls: asArray(p.gui_urls?.gui_url).map((u) => ({
-        name: textOf(u.name),
-        description: textOf(u.description),
-        url: textOf(u.url),
-      })),
-    }));
+    return asArray(list).map((p) => {
+      const masterUrl = textOf(p.master_url);
+      const userId = idOf(p.userid);
+      const teamId = idOf(p.teamid);
+      const hostId = idOf(p.hostid);
+      return {
+        masterUrl,
+        name: textOf(p.project_name) || masterUrl,
+        userName: textOf(p.user_name),
+        teamName: textOf(p.team_name),
+        userId,
+        teamId,
+        hostId,
+        userUrl: buildUserUrl(masterUrl, userId),
+        teamUrl: buildTeamUrl(masterUrl, teamId),
+        hostVenue: textOf(p.host_venue),
+        userTotalCredit: num(p.user_total_credit),
+        userExpavgCredit: num(p.user_expavg_credit),
+        hostTotalCredit: num(p.host_total_credit),
+        hostExpavgCredit: num(p.host_expavg_credit),
+        resourceShare: num(p.resource_share),
+        njobsSuccess: num(p.njobs_success),
+        njobsError: num(p.njobs_error),
+        elapsedTime: num(p.elapsed_time),
+        lastRpcTime: num(p.last_rpc_time),
+        nextRpcTime: num(p.next_rpc_time),
+        suspended: boolFlag(p, 'suspended_via_gui'),
+        dontRequestMoreWork: boolFlag(p, 'dont_request_more_work'),
+        ended: boolFlag(p, 'ended'),
+        schedulerRpcInProgress: boolFlag(p, 'scheduler_rpc_in_progress'),
+        guiUrls: asArray(p.gui_urls?.gui_url).map((u) => ({
+          name: textOf(u.name),
+          description: textOf(u.description),
+          url: textOf(u.url),
+        })),
+      };
+    });
+  }
+
+  async #withProjectWebLinks(projects) {
+    return Promise.all(projects.map((project) => this.#resolveProjectWebLinks(project)));
+  }
+
+  async #resolveProjectWebLinks(project) {
+    if (!project.userUrl) return project;
+
+    const cacheKey = `${project.masterUrl}|${project.userId}|${project.teamId}|${project.teamName}`;
+    const cached = projectLinkCache.get(cacheKey);
+    if (cached && Date.now() - cached.at < LINK_CACHE_TTL_MS) {
+      return {
+        ...project,
+        userUrl: cached.userUrl || project.userUrl,
+        teamUrl: cached.teamUrl || project.teamUrl,
+      };
+    }
+
+    // Prefer the team href from the user profile page when present. Classic
+    // projects expose team_display.php there; Drupal-based ones (Einstein@Home)
+    // expose /community/teams/<id> — team_display.php alone often 404s.
+    let teamUrl = project.teamUrl;
+    if (project.teamName) {
+      const resolved = await resolveTeamUrlFromProfile(project.userUrl, project.teamName);
+      if (resolved) teamUrl = resolved;
+    }
+
+    projectLinkCache.set(cacheKey, {
+      userUrl: project.userUrl,
+      teamUrl,
+      at: Date.now(),
+    });
+
+    return { ...project, teamUrl };
   }
 
   #normalizeResults(list) {
