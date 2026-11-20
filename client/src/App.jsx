@@ -121,8 +121,19 @@ export default function App() {
                 />
               </svg>
             </button>
-            <button className="refresh-btn" type="button" onClick={() => load(true)}>
-              Обновить
+            <button
+              className="icon-btn refresh-btn"
+              type="button"
+              aria-label="Обновить"
+              title="Обновить"
+              onClick={() => load(true)}
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V7c2.76 0 5 2.24 5 5a5 5 0 0 1-8.66 3.5l-1.42 1.42A7 7 0 0 0 19 12c0-1.93-.78-3.68-2.05-4.95ZM6 12c0-1.61.77-3.04 1.96-3.95l1.42-1.42A6.98 6.98 0 0 0 5 12a7 7 0 0 0 11.08 5.66l-1.42-1.42A5 5 0 0 1 6 12Z"
+                />
+              </svg>
             </button>
           </div>
         </div>
