@@ -39,7 +39,7 @@ export default function App() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [cfg, setCfg] = useState({ host: '192.168.1.45', port: 31416, password: '' });
+  const [cfg, setCfg] = useState({ host: '127.0.0.1', port: 31416, password: '' });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -154,7 +154,7 @@ export default function App() {
             <input
               value={cfg.host}
               onChange={(e) => setCfg({ ...cfg, host: e.target.value })}
-              placeholder="192.168.1.45"
+              placeholder="127.0.0.1"
             />
           </label>
           <label>

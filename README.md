@@ -17,8 +17,7 @@ cp .env.example .env   # задайте BOINC_PASSWORD
 docker compose up -d --build
 ```
 
-Браузер: **http://\<хост\>:8080**  
-(на foxweb-pc: http://192.168.1.45:8080)
+Браузер: **http://localhost:8080** (или `http://your-boinc-host:8080` в LAN).
 
 ```bash
 docker compose logs -f    # логи
@@ -46,6 +45,7 @@ RPC: `exchange_versions`, `get_host_info`, `get_cc_status`, `get_project_status`
 ## Опционально: systemd (нужен sudo)
 
 ```bash
+# WorkingDirectory в unit: путь к клону репозитория
 sudo cp deploy/boinc-monitor.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now boinc-monitor.service
