@@ -148,7 +148,8 @@ a {
 .tagline {
   margin: 0;
   color: var(--ink-soft);
-  max-width: 42ch;
+  max-width: none;
+  white-space: nowrap;
   font-size: 0.98rem;
 }
 
@@ -521,5 +522,9 @@ td.mono,
 
   .conn {
     align-items: flex-start;
+  }
+
+  .tagline {
+    white-space: normal;
   }
 }
