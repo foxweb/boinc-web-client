@@ -160,6 +160,43 @@ a {
   gap: 0.45rem;
 }
 
+.conn-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.45rem;
+  height: 2.45rem;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.icon-btn:hover {
+  transform: translateY(-1px);
+  color: var(--ink);
+}
+
+.icon-btn.active {
+  background: var(--accent-deep);
+  border-color: transparent;
+  color: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .icon-btn.active {
+    color: #062027;
+  }
+}
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -388,6 +425,8 @@ td.mono,
   flex-wrap: wrap;
   gap: 0.6rem;
   align-items: end;
+  margin-bottom: 1rem;
+  animation: rise 0.35s ease both;
 }
 
 .settings label {
