@@ -92,14 +92,20 @@ async function resolveTeamUrlFromProfile(userUrl, teamName) {
     const res = await fetch(userUrl, {
       signal: controller.signal,
       redirect: 'follow',
-      headers: { 'user-agent': 'boinc-web-client/1.0' },
+      headers: {
+        'user-agent': 'boinc-web-client/1.0',
+        'accept-language': 'en',
+      },
     });
     if (!res.ok) return '';
     const html = await res.text();
     const re = new RegExp(`href=["']([^"']+)["'][^>]*>\\s*${escapeRegExp(teamName)}\\s*<`, 'i');
     const match = html.match(re);
     if (!match) return '';
-    return new URL(match[1], res.url).href;
+    const absolute = new URL(match[1], res.url);
+    // Drop accidental i18n prefixes like /ar/community/... from locale negotiation.
+    absolute.pathname = absolute.pathname.replace(/^\/[a-z]{2}(?:-[a-z]{2})?(?=\/)/i, '');
+    return absolute.href;
   } catch {
     return '';
   } finally {
