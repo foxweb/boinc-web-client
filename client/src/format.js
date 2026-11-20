@@ -18,16 +18,14 @@ export function formatBytes(bytes) {
   return `${formatNumber(v, v >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
 }
 
+/** Duration as `HH:MM:SS` (ISO-like clock form). */
 export function formatDuration(seconds) {
   if (seconds == null || Number.isNaN(seconds)) return '—';
-  const s = Math.max(0, Math.round(Number(seconds)));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  if (h > 48) return `${formatNumber(h / 24, 1)} д`;
-  if (h > 0) return `${h}ч ${m}м`;
-  if (m > 0) return `${m}м ${sec}с`;
-  return `${sec}с`;
+  const total = Math.max(0, Math.round(Number(seconds)));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = total % 60;
+  return `${pad2(h)}:${pad2(m)}:${pad2(sec)}`;
 }
 
 function pad2(n) {
