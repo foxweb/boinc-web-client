@@ -516,13 +516,14 @@ td.mono,
 
 .detail-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.65rem 1.25rem;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
 }
 
 .kv {
   display: grid;
   gap: 0.15rem;
+  min-width: 0;
 }
 
 .kv .k {
@@ -533,6 +534,8 @@ td.mono,
 .kv .v {
   font-family: var(--mono);
   font-size: 0.92rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .chart-box {
