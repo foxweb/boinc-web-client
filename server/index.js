@@ -67,12 +67,16 @@ const liveHistory = [];
 let lastOverview = null;
 let lastError = null;
 let sampling = false;
+/** Bumped on settings changes so in-flight samples cannot overwrite newer state. */
+let sampleToken = 0;
 
 async function sampleOnce() {
   if (sampling) return;
+  const token = ++sampleToken;
   sampling = true;
   try {
     const overview = await client.getOverview();
+    if (token !== sampleToken) return;
     lastOverview = overview;
     lastError = null;
     liveHistory.push({
@@ -88,9 +92,10 @@ async function sampleOnce() {
     });
     while (liveHistory.length > config.historyMaxPoints) liveHistory.shift();
   } catch (err) {
+    if (token !== sampleToken) return;
     lastError = { message: err.message, at: new Date().toISOString() };
   } finally {
-    sampling = false;
+    if (token === sampleToken) sampling = false;
   }
 }
 
@@ -120,7 +125,7 @@ app.get('/api/config', (_req, res) => {
   });
 });
 
-app.post('/api/config', (req, res) => {
+app.post('/api/config', async (req, res) => {
   const { host, port, password } = req.body || {};
   if (host) config.host = String(host).trim();
   if (port) config.port = Number(port);
@@ -129,13 +134,18 @@ app.post('/api/config', (req, res) => {
   liveHistory.length = 0;
   lastOverview = null;
   lastError = null;
-  sampleOnce();
+  // Drop any in-flight sample against the previous host.
+  sampleToken += 1;
+  sampling = false;
+  await sampleOnce();
   res.json({
     ok: true,
     host: config.host,
     port: config.port,
     socketPath: config.socketPath,
     via: config.socketPath ? 'unix-socket-proxy' : 'tcp',
+    connected: Boolean(lastOverview),
+    lastError,
   });
 });
 
