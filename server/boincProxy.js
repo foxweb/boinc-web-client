@@ -1,15 +1,22 @@
 /**
- * Unix-socket TCP proxy to local BOINC GUI RPC.
- * Host-network sidecar listens on a shared volume socket; the bridge web
- * container connects via the same volume (UFW cannot block unix sockets).
+ * Unix-socket TCP proxy to BOINC GUI RPC.
+ *
+ * Host-network sidecar listens on a shared-volume socket; the bridge web
+ * container connects via that socket (UFW cannot block unix sockets).
+ *
+ * Upstream host:port is read from /boinc-ipc/target.json on each connect so
+ * the settings form can switch between local BOINC and remote LAN clients
+ * without rebuilding the proxy. Defaults to BOINC_HOST/BOINC_PORT.
  */
 import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
+import { readProxyTarget, targetFilePath } from './boincTarget.js';
 
 const socketPath = process.env.BOINC_SOCKET || '/boinc-ipc/gui_rpc.sock';
-const targetHost = process.env.BOINC_HOST || '127.0.0.1';
-const targetPort = Number(process.env.BOINC_PORT || 31416);
+const defaultHost = process.env.BOINC_HOST || '127.0.0.1';
+const defaultPort = Number(process.env.BOINC_PORT || 31416);
+const targetPath = targetFilePath(socketPath);
 
 fs.mkdirSync(path.dirname(socketPath), { recursive: true });
 try {
@@ -18,17 +25,31 @@ try {
   // ignore missing socket
 }
 
+if (targetPath && !fs.existsSync(targetPath)) {
+  fs.writeFileSync(
+    targetPath,
+    `${JSON.stringify({ host: defaultHost, port: defaultPort, updatedAt: new Date().toISOString() }, null, 2)}\n`,
+  );
+}
+
 const server = net.createServer((client) => {
-  const upstream = net.connect({ host: targetHost, port: targetPort }, () => {
+  const { host, port } = readProxyTarget(targetPath, {
+    host: defaultHost,
+    port: defaultPort,
+  });
+  const upstream = net.connect({ host, port }, () => {
     client.pipe(upstream);
     upstream.pipe(client);
   });
-  const fail = () => {
+  const fail = (err) => {
+    if (err) {
+      console.error(`BOINC proxy upstream ${host}:${port}:`, err.message);
+    }
     client.destroy();
     upstream.destroy();
   };
-  client.on('error', fail);
-  upstream.on('error', fail);
+  client.on('error', () => fail());
+  upstream.on('error', (err) => fail(err));
 });
 
 server.on('error', (err) => {
@@ -42,7 +63,9 @@ server.listen(socketPath, () => {
   } catch {
     // best-effort for cross-user container access
   }
-  console.log(`BOINC proxy ${socketPath} -> ${targetHost}:${targetPort}`);
+  console.log(
+    `BOINC proxy ${socketPath} -> dynamic target (${targetPath || 'env'}), default ${defaultHost}:${defaultPort}`,
+  );
 });
 
 const shutdown = () => {

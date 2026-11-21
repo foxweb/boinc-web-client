@@ -108,11 +108,10 @@ export default function App() {
         <div className="conn">
           <div className={`pill`}>
             <span className={`dot ${error && !data ? 'err' : ''}`} />
-            {data?.endpoint?.socket
-              ? 'unix-socket → BOINC'
-              : data?.endpoint
+            {data?.endpoint
               ? `${data.endpoint.host}:${data.endpoint.port}`
               : `${cfg.host}:${cfg.port}`}
+            {data?.endpoint?.via === 'unix-socket-proxy' ? ' · proxy' : ''}
             {data?.version ? ` · v${data.version}` : ''}
           </div>
           <div className="conn-actions">

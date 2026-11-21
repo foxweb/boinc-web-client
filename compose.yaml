@@ -32,6 +32,8 @@ services:
     environment:
       PORT: 8080
       BOINC_SOCKET: /boinc-ipc/gui_rpc.sock
+      BOINC_HOST: ${BOINC_HOST:-127.0.0.1}
+      BOINC_PORT: ${BOINC_PORT:-31416}
       BOINC_PASSWORD: ${BOINC_PASSWORD:?Set BOINC_PASSWORD in .env}
       HISTORY_INTERVAL_MS: ${HISTORY_INTERVAL_MS:-5000}
       HISTORY_MAX_POINTS: ${HISTORY_MAX_POINTS:-240}

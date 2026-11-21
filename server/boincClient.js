@@ -186,9 +186,13 @@ export class BoincClient {
     return {
       connected: true,
       fetchedAt: new Date().toISOString(),
-      endpoint: this.socketPath
-        ? { socket: this.socketPath }
-        : { host: this.host, port: this.port },
+      endpoint: {
+        host: this.host,
+        port: this.port,
+        ...(this.socketPath
+          ? { socket: this.socketPath, via: 'unix-socket-proxy' }
+          : { via: 'tcp' }),
+      },
       version: version?.server_version
         ? `${version.server_version.major}.${version.server_version.minor}.${version.server_version.release}`
         : null,
