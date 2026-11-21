@@ -36,7 +36,18 @@ export function writeProxyTarget(filePath, { host, port }) {
     port: Number(port) || 31416,
     updatedAt: new Date().toISOString(),
   };
+  const body = `${JSON.stringify(payload, null, 2)}\n`;
   const tmp = `${filePath}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-  fs.renameSync(tmp, filePath);
+  try {
+    fs.writeFileSync(tmp, body, 'utf8');
+    fs.renameSync(tmp, filePath);
+  } catch {
+    // Directory may already contain a root-owned file from the proxy; overwrite in place.
+    fs.writeFileSync(filePath, body, 'utf8');
+  }
+  try {
+    fs.chmodSync(filePath, 0o666);
+  } catch {
+    // best-effort for the next writer
+  }
 }

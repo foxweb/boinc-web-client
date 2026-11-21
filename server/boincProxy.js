@@ -18,18 +18,32 @@ const defaultHost = process.env.BOINC_HOST || '127.0.0.1';
 const defaultPort = Number(process.env.BOINC_PORT || 31416);
 const targetPath = targetFilePath(socketPath);
 
-fs.mkdirSync(path.dirname(socketPath), { recursive: true });
+const ipcDir = path.dirname(socketPath);
+fs.mkdirSync(ipcDir, { recursive: true });
+try {
+  // Web container runs as non-root and must rewrite target.json at runtime.
+  fs.chmodSync(ipcDir, 0o777);
+} catch {
+  // best-effort
+}
 try {
   fs.unlinkSync(socketPath);
 } catch {
   // ignore missing socket
 }
 
-if (targetPath && !fs.existsSync(targetPath)) {
-  fs.writeFileSync(
-    targetPath,
-    `${JSON.stringify({ host: defaultHost, port: defaultPort, updatedAt: new Date().toISOString() }, null, 2)}\n`,
-  );
+if (targetPath) {
+  if (!fs.existsSync(targetPath)) {
+    fs.writeFileSync(
+      targetPath,
+      `${JSON.stringify({ host: defaultHost, port: defaultPort, updatedAt: new Date().toISOString() }, null, 2)}\n`,
+    );
+  }
+  try {
+    fs.chmodSync(targetPath, 0o666);
+  } catch {
+    // best-effort
+  }
 }
 
 const server = net.createServer((client) => {
