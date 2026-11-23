@@ -3,10 +3,10 @@
   --ink: #102a33;
   --ink-soft: #3a5a66;
   --paper: #f3f7f8;
-  --panel: rgba(255, 255, 255, 0.72);
+  --panel: rgba(255, 255, 255, 0.8);
   --panel-solid: #ffffff;
-  --surface: rgba(255, 255, 255, 0.55);
-  --surface-strong: rgba(255, 255, 255, 0.7);
+  --surface: rgba(255, 255, 255, 0.62);
+  --surface-strong: rgba(255, 255, 255, 0.78);
   --line: rgba(16, 42, 51, 0.1);
   --accent: #0f8f86;
   --accent-deep: #0b3d4a;
@@ -24,11 +24,16 @@
   --error-bg: rgba(194, 65, 12, 0.1);
   --error-border: rgba(194, 65, 12, 0.2);
   --glow: rgba(15, 143, 134, 0.18);
-  --bg-glow-1: rgba(61, 214, 198, 0.22);
-  --bg-glow-2: rgba(244, 201, 93, 0.18);
-  --bg-grad-1: #e8f2f4;
-  --bg-grad-2: #f3f7f8;
-  --bg-grad-3: #eef4f1;
+  --bg-glow-1: rgba(61, 214, 198, 0.2);
+  --bg-glow-2: rgba(244, 201, 93, 0.14);
+  --bg-glow-3: rgba(11, 61, 74, 0.07);
+  --bg-grad-1: #e7f1f5;
+  --bg-grad-2: #f2f6f8;
+  --bg-grad-3: #eef3f0;
+  --star: rgba(11, 61, 74, 0.28);
+  --star-dim: rgba(15, 143, 134, 0.16);
+  --nebula: rgba(61, 214, 198, 0.13);
+  --wave: rgba(11, 61, 74, 0.065);
   --chart-grid: rgba(16, 42, 51, 0.08);
   --chart-tooltip-bg: #ffffff;
   --chart-tooltip-border: rgba(16, 42, 51, 0.1);
@@ -48,11 +53,11 @@
   :root {
     --ink: #e6f2f4;
     --ink-soft: #9bb4bc;
-    --paper: #0b161b;
-    --panel: rgba(18, 34, 40, 0.82);
+    --paper: #071117;
+    --panel: rgba(14, 28, 34, 0.88);
     --panel-solid: #142229;
-    --surface: rgba(20, 36, 42, 0.72);
-    --surface-strong: rgba(24, 42, 49, 0.88);
+    --surface: rgba(18, 34, 40, 0.78);
+    --surface-strong: rgba(22, 40, 47, 0.9);
     --line: rgba(184, 220, 228, 0.12);
     --accent: #3dd6c6;
     --accent-deep: #7ee0d5;
@@ -70,11 +75,16 @@
     --error-bg: rgba(251, 146, 60, 0.12);
     --error-border: rgba(251, 146, 60, 0.28);
     --glow: rgba(61, 214, 198, 0.2);
-    --bg-glow-1: rgba(61, 214, 198, 0.12);
-    --bg-glow-2: rgba(240, 180, 90, 0.08);
-    --bg-grad-1: #081218;
-    --bg-grad-2: #0b161b;
-    --bg-grad-3: #0e1c22;
+    --bg-glow-1: rgba(61, 214, 198, 0.14);
+    --bg-glow-2: rgba(240, 180, 90, 0.09);
+    --bg-glow-3: rgba(90, 140, 180, 0.1);
+    --bg-grad-1: #060f14;
+    --bg-grad-2: #0a151b;
+    --bg-grad-3: #0d1a21;
+    --star: rgba(220, 240, 245, 0.55);
+    --star-dim: rgba(126, 224, 213, 0.28);
+    --nebula: rgba(61, 214, 198, 0.12);
+    --wave: rgba(126, 224, 213, 0.08);
     --chart-grid: rgba(184, 220, 228, 0.1);
     --chart-tooltip-bg: #142229;
     --chart-tooltip-border: rgba(184, 220, 228, 0.14);
@@ -92,15 +102,111 @@ body,
   min-height: 100%;
 }
 
+#root {
+  position: relative;
+  z-index: 1;
+}
+
 body {
   margin: 0;
   min-width: 320px;
+  position: relative;
+  isolation: isolate;
   background:
-    radial-gradient(1200px 600px at 10% -10%, var(--bg-glow-1), transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, var(--bg-glow-2), transparent 50%),
-    linear-gradient(180deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 40%, var(--bg-grad-3) 100%);
+    radial-gradient(900px 520px at 12% -8%, var(--bg-glow-1), transparent 58%),
+    radial-gradient(760px 480px at 92% 4%, var(--bg-glow-2), transparent 52%),
+    radial-gradient(700px 520px at 70% 88%, var(--bg-glow-3), transparent 60%),
+    linear-gradient(180deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 42%, var(--bg-grad-3) 100%);
   background-attachment: fixed;
   color: var(--ink);
+}
+
+/* Soft starfield — Einstein@Home / deep-space atmosphere, CSS-only. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  opacity: 0.72;
+  background-image:
+    radial-gradient(1px 1px at 8% 12%, var(--star), transparent),
+    radial-gradient(1px 1px at 18% 28%, var(--star-dim), transparent),
+    radial-gradient(1.5px 1.5px at 27% 8%, var(--star), transparent),
+    radial-gradient(1px 1px at 36% 42%, var(--star-dim), transparent),
+    radial-gradient(1px 1px at 44% 16%, var(--star), transparent),
+    radial-gradient(1.5px 1.5px at 52% 64%, var(--star-dim), transparent),
+    radial-gradient(1px 1px at 61% 22%, var(--star), transparent),
+    radial-gradient(1px 1px at 69% 48%, var(--star-dim), transparent),
+    radial-gradient(1.5px 1.5px at 78% 14%, var(--star), transparent),
+    radial-gradient(1px 1px at 86% 36%, var(--star-dim), transparent),
+    radial-gradient(1px 1px at 93% 58%, var(--star), transparent),
+    radial-gradient(1px 1px at 12% 62%, var(--star-dim), transparent),
+    radial-gradient(1.5px 1.5px at 23% 78%, var(--star), transparent),
+    radial-gradient(1px 1px at 41% 84%, var(--star-dim), transparent),
+    radial-gradient(1px 1px at 58% 92%, var(--star), transparent),
+    radial-gradient(1px 1px at 74% 76%, var(--star-dim), transparent),
+    radial-gradient(1.5px 1.5px at 88% 88%, var(--star), transparent),
+    radial-gradient(1px 1px at 4% 44%, var(--star-dim), transparent),
+    radial-gradient(1px 1px at 33% 56%, var(--star), transparent),
+    radial-gradient(1px 1px at 97% 24%, var(--star-dim), transparent),
+    radial-gradient(2px 2px at 72% 11%, var(--star), transparent),
+    radial-gradient(2px 2px at 15% 71%, var(--star), transparent),
+    radial-gradient(2px 2px at 91% 41%, var(--star-dim), transparent);
+  background-repeat: repeat;
+  background-size: 480px 380px;
+}
+
+/* Nebula wash + faint gravitational-wave rings / pulsar glow. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--warm) 28%, transparent), transparent 14%),
+    radial-gradient(circle at 78% 18%, transparent 8%, var(--wave) 8.4%, transparent 9%),
+    radial-gradient(circle at 78% 18%, transparent 13%, var(--wave) 13.5%, transparent 14.2%),
+    radial-gradient(circle at 78% 18%, transparent 19%, var(--wave) 19.6%, transparent 20.4%),
+    radial-gradient(circle at 78% 18%, transparent 26%, var(--wave) 26.7%, transparent 27.6%),
+    radial-gradient(ellipse 80% 55% at 18% 72%, var(--nebula), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 84% 30%, color-mix(in srgb, var(--nebula) 80%, transparent), transparent 65%);
+  opacity: 0.95;
+  animation: cosmic-drift 48s ease-in-out infinite alternate;
+}
+
+@keyframes cosmic-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.82;
+  }
+  to {
+    transform: translate3d(-1.2%, 0.8%, 0) scale(1.03);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    animation: none;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  body::before {
+    opacity: 0.42;
+  }
+
+  body::after {
+    opacity: 0.78;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body::before {
+    opacity: 0.85;
+  }
 }
 
 button,
@@ -270,7 +376,7 @@ a {
   border-radius: var(--radius);
   background: var(--panel);
   border: 1px solid var(--line);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(14px) saturate(1.05);
   box-shadow: var(--shadow);
   animation: rise 0.55s ease both;
 }
@@ -327,7 +433,7 @@ a {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 1rem 1.1rem 1.15rem;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(14px) saturate(1.05);
   box-shadow: var(--shadow);
   animation: rise 0.6s ease both;
 }
@@ -521,6 +627,18 @@ td.mono,
   font-size: 0.92rem;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.kv .v a {
+  color: var(--accent-deep);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+.kv .v a:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
 }
 
 .chart-box {
